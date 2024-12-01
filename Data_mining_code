@@ -1,15 +1,3 @@
-
-
-import pandas as pd
-from sklearn.ensemble import GradientBoostingClassifier
-data=pd.read_csv('train.csv')
-test_data=pd.read_csv('test.csv')
-test_id=test_data['id']
-data.dropna(inplace=True) #drop the null values (data cleaning)
-data.drop('id',axis=1,inplace=True)
-x = data.drop("Response", axis = 1)
-y = data["Response"]
-
 # Import necessary libraries
 from imblearn.over_sampling import SMOTE  # For oversampling to address class imbalance
 from sklearn.ensemble import GradientBoostingClassifier  # Gradient Boosting classifier
@@ -18,6 +6,14 @@ from sklearn.impute import SimpleImputer  # For imputing missing data
 from sklearn.decomposition import PCA  # For dimensionality reduction
 import pandas as pd
 import numpy as np
+
+data=pd.read_csv('train.csv')
+test_data=pd.read_csv('test.csv')
+test_id=test_data['id']
+data.dropna(inplace=True) #drop the null values (data cleaning)
+data.drop('id',axis=1,inplace=True)
+x = data.drop("Response", axis = 1)
+y = data["Response"]
 
  #Step 4: Scale features (Standardization)
 scaler = StandardScaler()
