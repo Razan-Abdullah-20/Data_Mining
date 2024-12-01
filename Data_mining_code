@@ -1,9 +1,7 @@
 
 
 import pandas as pd
-from sklearn.tree import DecisionTreeClassifier
-import pandas as pd
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 data=pd.read_csv('train.csv')
 test_data=pd.read_csv('test.csv')
 test_id=test_data['id']
