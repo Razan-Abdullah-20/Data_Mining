@@ -1,0 +1,72 @@
+
+
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+data=pd.read_csv('train.csv')
+test_data=pd.read_csv('test.csv')
+test_id=test_data['id']
+data.dropna(inplace=True) #drop the null values (data cleaning)
+data.drop('id',axis=1,inplace=True)
+x = data.drop("Response", axis = 1)
+y = data["Response"]
+
+# Import necessary libraries
+from imblearn.over_sampling import SMOTE  # For oversampling to address class imbalance
+from sklearn.ensemble import GradientBoostingClassifier  # Gradient Boosting classifier
+from sklearn.model_selection import train_test_split  # For splitting data (if needed)
+from sklearn.impute import SimpleImputer  # For imputing missing data
+from sklearn.decomposition import PCA  # For dimensionality reduction
+import pandas as pd
+import numpy as np
+
+ #Step 4: Scale features (Standardization)
+scaler = StandardScaler()
+x_scaled = pd.DataFrame(scaler.fit_transform(x_encoded), columns=x_encoded.columns)
+
+# Step 5: Apply SMOTE to handle class imbalance (oversampling the minority class)
+smote = SMOTE(random_state=42)  # Using random_state=42 for consistency and reproducibility
+X_resampled, y_resampled = smote.fit_resample(x_scaled, y)
+
+# Step 6: Dimensionality Reduction (optional)
+pca = PCA(n_components=0.95)  # Retain 95% of variance
+X_resampled_pca = pca.fit_transform(X_resampled)
+
+# Step 7: Train-Test Split (Stratified split to preserve class distribution)
+X_train, X_test, y_train, y_test = train_test_split(X_resampled_pca, y_resampled, test_size=0.2, random_state=42, stratify=y_resampled)
+
+# Step 8: Train the Gradient Boosting Classifier
+classifier = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1)  # Hyperparameters can be tuned
+classifier.fit(X_train, y_train)
+
+# Step 9: Clean the test data (remove 'id' column before applying transformations)
+test_data_clean = test_data.drop(columns=['id'], errors='ignore')  # Remove 'id' column from test data
+
+# Impute missing values in the test data
+#test_data_imputed = pd.DataFrame(imputer.transform(test_data_clean), columns=test_data_clean.columns)  # Impute missing values
+#test_data_clipped = test_data_imputed.apply(lambda col: col.clip(lower=col.quantile(0.01), upper=col.quantile(0.99)) if col.dtype != 'object' else col)  # Clip outliers
+
+# Encode categorical columns in the test data using the same OneHotEncoder
+#test_data_encoded = pd.DataFrame(encoder.transform(test_data_clipped[categorical_columns]), columns=encoder.get_feature_names_out(categorical_columns))
+
+# Drop the original categorical columns and add the encoded ones to test data
+#test_data_final = pd.concat([test_data_clipped.drop(columns=categorical_columns), test_data_encoded], axis=1)
+
+# Step 10: Scale features in the test data (same scaler as training data)
+test_data_scaled = scaler.transform(test_data_final)  # Scale features
+
+# Apply PCA to the test data (same PCA model as training data)
+test_data_pca = pca.transform(test_data_scaled)
+
+# Step 11: Make predictions on the cleaned test data
+predicted_data = classifier.predict(test_data_pca)
+
+# Step 12: Create outcome DataFrame with 'id' column from original test_data
+outcome = pd.DataFrame({
+    'id': test_data['id'],  # Retaining the 'id' column from the original test_data for submission
+    'Response': predicted_data
+})
+
+# Step 13: Save the predictions to a CSV file
+outcome.to_csv('Submission.csv', index=False)
