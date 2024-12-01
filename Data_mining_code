@@ -1,24 +1,45 @@
 # Import necessary libraries
 from imblearn.over_sampling import SMOTE  # For oversampling to address class imbalance
 from sklearn.ensemble import GradientBoostingClassifier  # Gradient Boosting classifier
+from sklearn.preprocessing import LabelEncoder, StandardScaler, PowerTransformer, OneHotEncoder
 from sklearn.model_selection import train_test_split  # For splitting data (if needed)
 from sklearn.impute import SimpleImputer  # For imputing missing data
 from sklearn.decomposition import PCA  # For dimensionality reduction
-from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
 
-data=pd.read_csv('train.csv')
-test_data=pd.read_csv('test.csv')
+data=pd.read_csv('train.csv')                                      #read the train data
+test_data=pd.read_csv('test.csv')                                  #read the test data
 test_id=test_data['id']
-data.dropna(inplace=True) #drop the null values (data cleaning)
-data.drop('id',axis=1,inplace=True)
-x = data.drop("Response", axis = 1)
-y = data["Response"]
 
- #Step 4: Scale features (Standardization)
+data.drop('id',axis=1,inplace=True)  
+test_data.drop('id',axis=1,inplace=True)
+
+y=data['Response']                                                 #the desired outcome
+x=data.drop('Response', axis=1)  
+
+# Step 1: Handle Missing Data - Impute missing values
+imputer = SimpleImputer(strategy='mean')  # For numerical features, we use mean imputation
+x_imputed = pd.DataFrame(imputer.fit_transform(x), columns=x.columns)
+
+# Step 2: Handle Outliers (Clipping based on quantiles)
+x_clipped = x_imputed.apply(lambda col: col.clip(lower=col.quantile(0.01), upper=col.quantile(0.99)) if col.dtype != 'object' else col)
+
+# Step 3: Encode categorical columns in the training data using OneHotEncoder
+# OneHotEncoder creates binary columns for each category in the categorical column
+encoder = OneHotEncoder(drop='first', sparse_output=False)  # 'sparse_output' replaces 'sparse'
+categorical_columns = x_clipped.select_dtypes(include=['object']).columns
+
+# Apply OneHotEncoder only to the categorical columns
+encoded_columns = pd.DataFrame(encoder.fit_transform(x_clipped[categorical_columns]), columns=encoder.get_feature_names_out(categorical_columns))
+
+# Drop the original categorical columns and add the encoded ones
+x_encoded = pd.concat([x_clipped.drop(columns=categorical_columns), encoded_columns], axis=1)
+
+
+# Step 4: Scale features (Standardization)
 scaler = StandardScaler()
-x_scaled = pd.DataFrame(scaler.fit_transform(x), columns=x.columns)
+x_scaled = pd.DataFrame(scaler.fit_transform(x_encoded), columns=x_encoded.columns)
 
 # Step 5: Apply SMOTE to handle class imbalance (oversampling the minority class)
 smote = SMOTE(random_state=42)  # Using random_state=42 for consistency and reproducibility
@@ -39,17 +60,17 @@ classifier.fit(X_train, y_train)
 test_data_clean = test_data.drop(columns=['id'], errors='ignore')  # Remove 'id' column from test data
 
 # Impute missing values in the test data
-#test_data_imputed = pd.DataFrame(imputer.transform(test_data_clean), columns=test_data_clean.columns)  # Impute missing values
-#test_data_clipped = test_data_imputed.apply(lambda col: col.clip(lower=col.quantile(0.01), upper=col.quantile(0.99)) if col.dtype != 'object' else col)  # Clip outliers
+test_data_imputed = pd.DataFrame(imputer.transform(test_data_clean), columns=test_data_clean.columns)  # Impute missing values
+test_data_clipped = test_data_imputed.apply(lambda col: col.clip(lower=col.quantile(0.01), upper=col.quantile(0.99)) if col.dtype != 'object' else col)  # Clip outliers
 
 # Encode categorical columns in the test data using the same OneHotEncoder
-#test_data_encoded = pd.DataFrame(encoder.transform(test_data_clipped[categorical_columns]), columns=encoder.get_feature_names_out(categorical_columns))
+test_data_encoded = pd.DataFrame(encoder.transform(test_data_clipped[categorical_columns]), columns=encoder.get_feature_names_out(categorical_columns))
 
 # Drop the original categorical columns and add the encoded ones to test data
-#test_data_final = pd.concat([test_data_clipped.drop(columns=categorical_columns), test_data_encoded], axis=1)
+test_data_final = pd.concat([test_data_clipped.drop(columns=categorical_columns), test_data_encoded], axis=1)
 
 # Step 10: Scale features in the test data (same scaler as training data)
-test_data_scaled = scaler.transform(test_data_clean)  # Scale features
+test_data_scaled = scaler.transform(test_data_final)  # Scale features
 
 # Apply PCA to the test data (same PCA model as training data)
 test_data_pca = pca.transform(test_data_scaled)
@@ -59,7 +80,7 @@ predicted_data = classifier.predict(test_data_pca)
 
 # Step 12: Create outcome DataFrame with 'id' column from original test_data
 outcome = pd.DataFrame({
-    'id': test_data['id'],  # Retaining the 'id' column from the original test_data for submission
+    'id': test_id,  # Retaining the 'id' column from the original test_data for submission
     'Response': predicted_data
 })
 
