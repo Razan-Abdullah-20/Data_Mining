@@ -4,6 +4,7 @@ from sklearn.ensemble import GradientBoostingClassifier  # Gradient Boosting cla
 from sklearn.model_selection import train_test_split  # For splitting data (if needed)
 from sklearn.impute import SimpleImputer  # For imputing missing data
 from sklearn.decomposition import PCA  # For dimensionality reduction
+from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
 
@@ -17,7 +18,7 @@ y = data["Response"]
 
  #Step 4: Scale features (Standardization)
 scaler = StandardScaler()
-x_scaled = pd.DataFrame(scaler.fit_transform(x_encoded), columns=x_encoded.columns)
+x_scaled = pd.DataFrame(scaler.fit_transform(x), columns=x.columns)
 
 # Step 5: Apply SMOTE to handle class imbalance (oversampling the minority class)
 smote = SMOTE(random_state=42)  # Using random_state=42 for consistency and reproducibility
@@ -48,7 +49,7 @@ test_data_clean = test_data.drop(columns=['id'], errors='ignore')  # Remove 'id'
 #test_data_final = pd.concat([test_data_clipped.drop(columns=categorical_columns), test_data_encoded], axis=1)
 
 # Step 10: Scale features in the test data (same scaler as training data)
-test_data_scaled = scaler.transform(test_data_final)  # Scale features
+test_data_scaled = scaler.transform(test_data_clean)  # Scale features
 
 # Apply PCA to the test data (same PCA model as training data)
 test_data_pca = pca.transform(test_data_scaled)
