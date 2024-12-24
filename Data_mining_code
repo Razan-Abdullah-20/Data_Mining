@@ -1,7 +1,7 @@
 # Import necessary libraries
 from imblearn.over_sampling import SMOTE  # For oversampling to address class imbalance
 from sklearn.ensemble import GradientBoostingClassifier  # Gradient Boosting classifier
-from sklearn.preprocessing import LabelEncoder, StandardScaler, PowerTransformer, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.model_selection import train_test_split  # For splitting data (if needed)
 from sklearn.impute import SimpleImputer  # For imputing missing data
 from sklearn.decomposition import PCA  # For dimensionality reduction
